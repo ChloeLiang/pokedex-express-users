@@ -97,7 +97,6 @@ const updatePokemon = (request, response) => {
   let pokemon = request.body;
   const queryString = 'UPDATE "pokemon" SET "num"=($1), "name"=($2), "img"=($3), "height"=($4), "weight"=($5) WHERE "id"=($6)';
   const values = [pokemon.num, pokemon.name, pokemon.img, pokemon.height, pokemon.weight, id];
-  console.log(queryString);
   pool.query(queryString, values, (err, result) => {
     if (err) {
       console.error('Query error:', err.stack);
@@ -133,7 +132,7 @@ const usersPokemonsCreate = (request, response) => {
       console.error('Query error:', err.stack);
       response.send('Error');
     } else {
-      response.redirect('/');
+      response.redirect('back');
     }
   });
 };
@@ -149,12 +148,24 @@ const userNew = (request, response) => {
 }
 
 const usersShow = (request, response) => {
-  const queryString = `SELECT pokemon.id, pokemon.name FROM pokemon INNER JOIN users_pokemons ON users_pokemons.pokemon_id = pokemon.id WHERE users_pokemons.user_id = ${request.params.id}`;
-  pool.query(queryString, (err, result) => {
-    if (err) {
-      console.error('Query error:', err.stack);
+  let queryString = `SELECT pokemon.id, pokemon.name FROM pokemon INNER JOIN users_pokemons ON users_pokemons.pokemon_id = pokemon.id WHERE users_pokemons.user_id = ${request.params.id}`;
+  pool.query(queryString, (capturedErr, capturedResult) => {
+    if (capturedErr) {
+      console.error('Query error:', capturedErr.stack);
+      response.send('Query Error');
     } else {
-      response.render('users/user', { pokemons: result.rows });
+      queryString = 'SELECT * FROM pokemon';
+      pool.query(queryString, (allErr, allResult) => {
+        if (allErr) {
+          console.error('Query error:', allErr.stack);
+          response.send('Query Error');
+        } else {
+          const userId = request.params.id;
+          const allPokemons = allResult.rows;
+          const capturedPokemons = capturedResult.rows;
+          response.render('users/user', { userId, allPokemons, capturedPokemons });
+        }
+      });
     }
   });
 };
