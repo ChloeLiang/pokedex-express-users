@@ -14,11 +14,16 @@ class Pokemon extends React.Component {
       );
     });
 
+    const deleteUrl = `/pokemon/${this.props.pokemon.id}?_method=DELETE`;
+
     return (
       <html>
         <head />
         <body>
           <div>
+            <form action={deleteUrl} method="POST">
+              <input type="submit" value="Delete" />
+            </form>
             <ul className="pokemon-list">
               <li className="pokemon-attribute">
                 id: {this.props.pokemon.id}

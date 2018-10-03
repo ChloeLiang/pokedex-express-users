@@ -125,13 +125,27 @@ const updatePokemon = (request, response) => {
   });
 }
 
-const deletePokemonForm = (request, response) => {
-  response.send("COMPLETE ME");
-}
-
 const deletePokemon = (request, response) => {
-  response.send("COMPLETE ME");
-}
+  // Delete from pokemon and join table
+  const id = request.params.id;
+  let queryString = `DELETE from pokemon WHERE id = ${id}`;
+  pool.query(queryString, (pokemonErr, pokemonResult) => {
+    if (pokemonErr) {
+      console.error('Query error:', pokemonErr.stack);
+      response.send('Query Error');
+    } else {
+      queryString = `DELETE from users_pokemons WHERE pokemon_id = ${id}`;
+      pool.query(queryString, (joinErr, joinResult) => {
+        if (joinErr) {
+          console.error('Query error:', joinErr.stack);
+          response.send('Query Error');
+        } else {
+          response.redirect('/');
+        }
+      });
+    }
+  });
+};
 
 /**
  * ===================================
@@ -214,7 +228,6 @@ app.get('/', getRoot);
 app.get('/pokemon/:id/edit', editPokemonForm);
 app.get('/pokemon/new', getNew);
 app.get('/pokemon/:id', getPokemon);
-app.get('/pokemon/:id/delete', deletePokemonForm);
 app.post('/pokemon', postPokemon);
 app.put('/pokemon/:id', updatePokemon);
 app.delete('/pokemon/:id', deletePokemon);
