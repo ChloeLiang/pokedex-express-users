@@ -1,27 +1,13 @@
-/**
- * To-do for homework on 28 Jun 2018
- * =================================
- * 1. Create the relevant tables.sql file
- * 2. New routes for user-creation
- * 3. Change the pokemon form to add an input for user id such that the pokemon belongs to the user with that id
- * 4. (FURTHER) Add a drop-down menu of all users on the pokemon form
- * 5. (FURTHER) Add a types table and a pokemon-types table in your database, and create a seed.sql file inserting relevant data for these 2 tables. Note that a pokemon can have many types, and a type can have many pokemons.
- */
-
 const express = require('express');
 const methodOverride = require('method-override');
 const pg = require('pg');
 
 // Initialise postgres client
 const config = {
-  user: 'akira',
+  user: 'liangxin',
   host: '127.0.0.1',
   database: 'pokemons',
   port: 5432,
-};
-
-if (config.user === 'ck') {
-	throw new Error("====== UPDATE YOUR DATABASE CONFIGURATION =======");
 };
 
 const pool = new pg.Pool(config);
@@ -36,15 +22,12 @@ pool.on('error', function (err) {
  * ===================================
  */
 
-// Init express app
+const reactEngine = require('express-react-views').createEngine();
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 
-
-// Set react-views to be the default view engine
-const reactEngine = require('express-react-views').createEngine();
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jsx');
 app.engine('jsx', reactEngine);
@@ -55,20 +38,13 @@ app.engine('jsx', reactEngine);
  * ===================================
  */
 
- const getRoot = (request, response) => {
-  // query database for all pokemon
-
-  // respond with HTML page displaying all pokemon
-  //
+const getRoot = (request, response) => {
   const queryString = 'SELECT * from pokemon;';
   pool.query(queryString, (err, result) => {
     if (err) {
       console.error('Query error:', err.stack);
     } else {
-      console.log('Query result:', result);
-
-      // redirect to home page
-      response.render( 'pokemon/home', {pokemon: result.rows} );
+      response.render('pokemon/home', { pokemon: result.rows });
     }
   });
 }
@@ -84,17 +60,14 @@ const getPokemon = (request, response) => {
     if (err) {
       console.error('Query error:', err.stack);
     } else {
-      console.log('Query result:', result);
-
-      // redirect to home page
-      response.render( 'pokemon/pokemon', {pokemon: result.rows[0]} );
+      response.render('pokemon/pokemon', { pokemon: result.rows[0] });
     }
   });
 }
 
 const postPokemon = (request, response) => {
   let params = request.body;
-  
+
   const queryString = 'INSERT INTO pokemon(name, height) VALUES($1, $2);';
   const values = [params.name, params.height];
 
@@ -102,9 +75,6 @@ const postPokemon = (request, response) => {
     if (err) {
       console.log('query error:', err.stack);
     } else {
-      console.log('query result:', result);
-
-      // redirect to home page
       response.redirect('/');
     }
   });
@@ -117,10 +87,7 @@ const editPokemonForm = (request, response) => {
     if (err) {
       console.error('Query error:', err.stack);
     } else {
-      console.log('Query result:', result);
-
-      // redirect to home page
-      response.render( 'pokemon/edit', {pokemon: result.rows[0]} );
+      response.render('pokemon/edit', { pokemon: result.rows[0] });
     }
   });
 }
@@ -135,9 +102,6 @@ const updatePokemon = (request, response) => {
     if (err) {
       console.error('Query error:', err.stack);
     } else {
-      console.log('Query result:', result);
-
-      // redirect to home page
       response.redirect('/');
     }
   });
@@ -150,36 +114,60 @@ const deletePokemonForm = (request, response) => {
 const deletePokemon = (request, response) => {
   response.send("COMPLETE ME");
 }
+
+/**
+ * ===================================
+ * Users Pokemons
+ * ===================================
+ */
+
+const usersPokemonsNew = (request, response) => {
+  response.render('usersPokemons/new');
+};
+
+const usersPokemonsCreate = (request, response) => {
+  const queryString = 'INSERT INTO users_pokemons (user_id, pokemon_id) VALUES ($1, $2)';
+  const values = Object.values(request.body);
+  pool.query(queryString, values, (err, result) => {
+    if (err) {
+      console.error('Query error:', err.stack);
+      response.send('Error');
+    } else {
+      response.redirect('/');
+    }
+  });
+};
+
 /**
  * ===================================
  * User
  * ===================================
  */
 
-
 const userNew = (request, response) => {
   response.render('users/new');
 }
 
+const usersShow = (request, response) => {
+  const queryString = `SELECT pokemon.id, pokemon.name FROM pokemon INNER JOIN users_pokemons ON users_pokemons.pokemon_id = pokemon.id WHERE users_pokemons.user_id = ${request.params.id}`;
+  pool.query(queryString, (err, result) => {
+    if (err) {
+      console.error('Query error:', err.stack);
+    } else {
+      response.render('users/user', { pokemons: result.rows });
+    }
+  });
+};
+
 const userCreate = (request, response) => {
-
   const queryString = 'INSERT INTO users (name) VALUES ($1)';
-
   const values = [request.body.name];
 
-  console.log(queryString);
-
   pool.query(queryString, values, (err, result) => {
-
     if (err) {
-
       console.error('Query error:', err.stack);
       response.send('dang it.');
     } else {
-
-      console.log('Query result:', result);
-
-      // redirect to home page
       response.redirect('/');
     }
   });
@@ -197,16 +185,15 @@ app.get('/pokemon/:id/edit', editPokemonForm);
 app.get('/pokemon/new', getNew);
 app.get('/pokemon/:id', getPokemon);
 app.get('/pokemon/:id/delete', deletePokemonForm);
-
 app.post('/pokemon', postPokemon);
-
 app.put('/pokemon/:id', updatePokemon);
-
 app.delete('/pokemon/:id', deletePokemon);
 
-// TODO: New routes for creating users
+app.get('/users_pokemons/new', usersPokemonsNew);
+app.post('/users_pokemons', usersPokemonsCreate);
 
 app.get('/users/new', userNew);
+app.get('/users/:id', usersShow);
 app.post('/users', userCreate);
 
 /**
@@ -215,8 +202,6 @@ app.post('/users', userCreate);
  * ===================================
  */
 const server = app.listen(3000, () => console.log('~~~ Ahoy we go from the port of 3000!!!'));
-
-
 
 // Handles CTRL-C shutdown
 function shutDown() {
@@ -232,5 +217,3 @@ function shutDown() {
 
 process.on('SIGTERM', shutDown);
 process.on('SIGINT', shutDown);
-
-
