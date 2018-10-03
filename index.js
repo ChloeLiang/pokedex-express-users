@@ -158,14 +158,31 @@ const usersPokemonsNew = (request, response) => {
 };
 
 const usersPokemonsCreate = (request, response) => {
-  const queryString = 'INSERT INTO users_pokemons (user_id, pokemon_id) VALUES ($1, $2)';
-  const values = Object.values(request.body);
-  pool.query(queryString, values, (err, result) => {
-    if (err) {
-      console.error('Query error:', err.stack);
-      response.send('Error');
+  let queryString = `SELECT * FROM users_pokemons WHERE user_id = ${request.body.user_id}`;
+  pool.query(queryString, (userErr, userResult) => {
+    if (userErr) {
+      console.error('Query error:', userErr.stack);
+      response.send('Query Error');
     } else {
-      response.redirect('back');
+      const pokemonId = parseInt(request.body.pokemon_id);
+      const foundPokemon = userResult.rows.find(obj => {
+        return obj.pokemon_id === pokemonId;
+      });
+
+      if (foundPokemon) {
+        response.send('ERROR: Pokemon has already been captured.');
+      } else {
+        queryString = 'INSERT INTO users_pokemons (user_id, pokemon_id) VALUES ($1, $2)';
+        const values = Object.values(request.body);
+        pool.query(queryString, values, (err, result) => {
+          if (err) {
+            console.error('Query error:', err.stack);
+            response.send('Error');
+          } else {
+            response.redirect('back');
+          }
+        });
+      }
     }
   });
 };
