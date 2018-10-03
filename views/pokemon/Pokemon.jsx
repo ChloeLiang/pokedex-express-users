@@ -8,6 +8,12 @@ class Pokemon extends React.Component {
       );
     });
 
+    const allUsers = this.props.allUsers.map(user => {
+      return (
+        <option key={user.id} value={user.id}>{user.name}</option>
+      );
+    });
+
     return (
       <html>
         <head />
@@ -31,6 +37,17 @@ class Pokemon extends React.Component {
               </li>
             </ul>
             <p>Captured by:</p>
+            <form action="/users_pokemons" method="POST">
+              <select name="user_id" id="user_id">
+                {allUsers}
+              </select>
+              <input
+                type="hidden"
+                name="pokemon_id"
+                value={this.props.pokemon.id}
+              />
+              <input type="submit" value="Add user" />
+            </form>
             <ul>
               {users}
             </ul>

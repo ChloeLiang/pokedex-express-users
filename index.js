@@ -66,9 +66,18 @@ const getPokemon = (request, response) => {
           console.error('Query error:', usersErr.stack);
           response.send('Query Error');
         } else {
-          const pokemon = result.rows[0];
-          const users = usersResult.rows;
-          response.render('pokemon/pokemon', { pokemon, users });
+          queryString = 'SELECT * FROM users';
+          pool.query(queryString, (allUsersErr, allUsersResult) => {
+            if (allUsersErr) {
+              console.error('Query error:', allUsersErr.stack);
+              response.send('Query Error');
+            } else {
+              const pokemon = result.rows[0];
+              const users = usersResult.rows;
+              const allUsers = allUsersResult.rows;
+              response.render('pokemon/pokemon', { pokemon, users, allUsers });
+            }
+          });
         }
       });
     }
