@@ -2,6 +2,12 @@ var React = require("react");
 
 class Pokemon extends React.Component {
   render() {
+    const users = this.props.users.map(user => {
+      return (
+        <li key={user.id}>{user.name}</li>
+      );
+    });
+
     return (
       <html>
         <head />
@@ -23,7 +29,10 @@ class Pokemon extends React.Component {
               <li className="pokemon-attribute">
                 weight: {this.props.pokemon.weight}
               </li>
-
+            </ul>
+            <p>Captured by:</p>
+            <ul>
+              {users}
             </ul>
           </div>
         </body>

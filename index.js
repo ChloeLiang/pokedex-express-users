@@ -55,12 +55,22 @@ const getNew = (request, response) => {
 
 const getPokemon = (request, response) => {
   let id = request.params['id'];
-  const queryString = 'SELECT * FROM pokemon WHERE id = ' + id + ';';
+  let queryString = 'SELECT * FROM pokemon WHERE id = ' + id + ';';
   pool.query(queryString, (err, result) => {
     if (err) {
       console.error('Query error:', err.stack);
     } else {
-      response.render('pokemon/pokemon', { pokemon: result.rows[0] });
+      queryString = `SELECT users.id, users.name FROM users INNER JOIN users_pokemons ON users_pokemons.user_id = users.id WHERE users_pokemons.pokemon_id = ${id}`;
+      pool.query(queryString, (usersErr, usersResult) => {
+        if (usersErr) {
+          console.error('Query error:', usersErr.stack);
+          response.send('Query Error');
+        } else {
+          const pokemon = result.rows[0];
+          const users = usersResult.rows;
+          response.render('pokemon/pokemon', { pokemon, users });
+        }
+      });
     }
   });
 }
