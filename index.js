@@ -176,9 +176,21 @@ const usersPokemonsCreate = (request, response) => {
  * ===================================
  */
 
-const userNew = (request, response) => {
+const usersEdit = (request, response) => {
+  const queryString = `SELECT * FROM users WHERE id = ${request.params.id}`;
+  pool.query(queryString, (err, result) => {
+    if (err) {
+      console.error('Query error:', err.stack);
+      response.send('Query Error');
+    } else {
+      response.render('users/Edit', { user: result.rows[0] });
+    }
+  });
+};
+
+const usersNew = (request, response) => {
   response.render('users/new');
-}
+};
 
 const usersShow = (request, response) => {
   let queryString = `SELECT pokemon.id, pokemon.name FROM pokemon INNER JOIN users_pokemons ON users_pokemons.pokemon_id = pokemon.id WHERE users_pokemons.user_id = ${request.params.id}`;
@@ -203,7 +215,7 @@ const usersShow = (request, response) => {
   });
 };
 
-const userCreate = (request, response) => {
+const usersCreate = (request, response) => {
   const queryString = 'INSERT INTO users (name) VALUES ($1)';
   const values = [request.body.name];
 
@@ -215,7 +227,21 @@ const userCreate = (request, response) => {
       response.redirect('/');
     }
   });
-}
+};
+
+const usersUpdate = (request, response) => {
+  const id = request.params.id;
+  const queryString = `UPDATE users SET name = ($1) WHERE id = ${id}`;
+  const values = [request.body.name.trim()];
+  pool.query(queryString, values, (err, result) => {
+    if (err) {
+      console.error('Query error:', err.stack);
+      response.send('Query Error');
+    } else {
+      response.redirect(`/users/${id}`);
+    }
+  });
+};
 
 /**
  * ===================================
@@ -235,9 +261,11 @@ app.delete('/pokemon/:id', deletePokemon);
 app.get('/users_pokemons/new', usersPokemonsNew);
 app.post('/users_pokemons', usersPokemonsCreate);
 
-app.get('/users/new', userNew);
+app.get('/users/:id/edit', usersEdit);
+app.get('/users/new', usersNew);
 app.get('/users/:id', usersShow);
-app.post('/users', userCreate);
+app.post('/users', usersCreate);
+app.put('/users/:id', usersUpdate);
 
 /**
  * ===================================
