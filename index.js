@@ -176,6 +176,18 @@ const usersPokemonsCreate = (request, response) => {
  * ===================================
  */
 
+const usersIndex = (request, response) => {
+  const queryString = 'SELECT * FROM users ORDER BY id';
+  pool.query(queryString, (err, result) => {
+    if (err) {
+      console.error('Query error:', err.stack);
+      response.send('Query Error');
+    } else {
+      response.render('users/index', { users: result.rows });
+    }
+  });
+};
+
 const usersEdit = (request, response) => {
   const queryString = `SELECT * FROM users WHERE id = ${request.params.id}`;
   pool.query(queryString, (err, result) => {
@@ -243,6 +255,27 @@ const usersUpdate = (request, response) => {
   });
 };
 
+const usersDelete = (request, response) => {
+  const id = request.params.id;
+  let queryString = `DELETE from users WHERE id = ${id}`;
+  pool.query(queryString, (userErr, userResult) => {
+    if (userErr) {
+      console.error('Query error:', userErr.stack);
+      response.send('Query Error');
+    } else {
+      queryString = `DELETE from users_pokemons WHERE user_id = ${id}`;
+      pool.query(queryString, (joinErr, joinResult) => {
+        if (joinErr) {
+          console.error('Query error:', joinErr.stack);
+          response.send('Query Error');
+        } else {
+          response.redirect('/users');
+        }
+      });
+    }
+  });
+};
+
 /**
  * ===================================
  * Routes
@@ -264,8 +297,10 @@ app.post('/users_pokemons', usersPokemonsCreate);
 app.get('/users/:id/edit', usersEdit);
 app.get('/users/new', usersNew);
 app.get('/users/:id', usersShow);
+app.get('/users', usersIndex);
 app.post('/users', usersCreate);
 app.put('/users/:id', usersUpdate);
+app.delete('/users/:id', usersDelete);
 
 /**
  * ===================================
