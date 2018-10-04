@@ -8,7 +8,10 @@ class New extends React.Component {
         <body>
           <form method="POST" action="/users">
             <div>
-              name:<input name="name" type="text" />
+              Name:<input name="name" type="text" required />
+            </div>
+            <div>
+              Password:<input name="password" type="password" required />
             </div>
             <input type="submit" value="Submit" />
           </form>

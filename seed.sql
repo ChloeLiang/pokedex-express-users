@@ -31,3 +31,7 @@ INSERT INTO pokemons_types (pokemon_id, type_id) VALUES (10, 6);
 INSERT INTO pokemons_types (pokemon_id, type_id) VALUES (11, 6);
 INSERT INTO pokemons_types (pokemon_id, type_id) VALUES (12, 4);
 INSERT INTO pokemons_types (pokemon_id, type_id) VALUES (12, 6);
+
+INSERT INTO users_pokemons (user_id, pokemon_id) VALUES (1, 1);
+INSERT INTO users_pokemons (user_id, pokemon_id) VALUES (1, 2);
+INSERT INTO users_pokemons (user_id, pokemon_id) VALUES (1, 3);

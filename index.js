@@ -1,6 +1,9 @@
 const express = require('express');
 const methodOverride = require('method-override');
 const pg = require('pg');
+const sha256 = require('js-sha256');
+const cookieParser = require('cookie-parser');
+const reactEngine = require('express-react-views').createEngine();
 
 // Initialise postgres client
 const config = {
@@ -22,11 +25,10 @@ pool.on('error', function (err) {
  * ===================================
  */
 
-const reactEngine = require('express-react-views').createEngine();
 const app = express();
-
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
+app.use(cookieParser());
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jsx');
@@ -245,15 +247,16 @@ const usersShow = (request, response) => {
 };
 
 const usersCreate = (request, response) => {
-  const queryString = 'INSERT INTO users (name) VALUES ($1)';
-  const values = [request.body.name];
+  const queryString = 'INSERT INTO users (name, password) VALUES ($1, $2) RETURNING id';
+  const values = [request.body.name, sha256(request.body.password)];
 
   pool.query(queryString, values, (err, result) => {
     if (err) {
       console.error('Query error:', err.stack);
       response.send('dang it.');
     } else {
-      response.redirect('/');
+      response.cookie('userId', result.rows[0].id);
+      response.redirect('/users');
     }
   });
 };
@@ -295,6 +298,43 @@ const usersDelete = (request, response) => {
 
 /**
  * ===================================
+ * Cookie
+ * ===================================
+ */
+
+const getCookies = (request, response) => {
+  response.send(request.cookies);
+};
+
+const logout = (request, response) => {
+  response.clearCookie('userId');
+  response.redirect('/');
+};
+
+const getLoginForm = (request, response) => {
+  response.render('auth/login');
+};
+
+const login = (request, response) => {
+  const queryString = `SELECT * from users WHERE name = '${request.body.name}'`;
+  pool.query(queryString, (err, result) => {
+    if (err) {
+      console.error('Query error:', err.stack);
+      response.send('Query Error');
+    } else {
+      const password = sha256(request.body.password);
+      const userId = result.rows[0].id;
+      if (password === result.rows[0].password) {
+        response.cookie('userId', userId);
+      }
+
+      response.redirect(`/users/${userId}`);
+    }
+  });
+};
+
+/**
+ * ===================================
  * Routes
  * ===================================
  */
@@ -318,6 +358,11 @@ app.get('/users', usersIndex);
 app.post('/users', usersCreate);
 app.put('/users/:id', usersUpdate);
 app.delete('/users/:id', usersDelete);
+
+app.get('/cookies', getCookies);
+app.get('/login', getLoginForm);
+app.get('/logout', logout);
+app.post('/login', login);
 
 /**
  * ===================================
