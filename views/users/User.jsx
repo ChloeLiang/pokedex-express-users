@@ -2,34 +2,42 @@ var React = require("react");
 
 class User extends React.Component {
   render() {
-    const deleteUrl = `/users/${this.props.userId}?_method=DELETE`;
-    const pokemonOptions = this.props.allPokemons.map(pokemon => {
-      return (
-        <option key={pokemon.id} value={pokemon.id}>{pokemon.name}</option>
+    let deleteUser;
+    let pokemonList;
+    if (this.props.isAuth) {
+      const deleteUserUrl = `/users/${this.props.userId}?_method=DELETE`;
+      deleteUser = (
+        <form action={deleteUserUrl} method="POST">
+          <input type="submit" value="Delete User" />
+        </form>
       );
-    });
+
+      pokemonList = this.props.capturedPokemons.map(pokemon => {
+        const releasePokemonUrl = `/users_pokemons/${pokemon.id}?_method=DELETE`;
+        return (
+          <li key={pokemon.id}>
+            {pokemon.name}
+            <form action={releasePokemonUrl} method="POST">
+              <input type="submit" value="Release" />
+            </form>
+          </li>
+        );
+      });
+    } else {
+      pokemonList = this.props.capturedPokemons.map(pokemon => (
+        <li key={pokemon.id}>
+          {pokemon.name}
+        </li>
+      ));
+    }
 
     return (
       <html>
         <head />
         <body>
-          <form action={deleteUrl} method="POST">
-            <input type="submit" value="Delete User" />
-          </form>
-          <h3>Captured Pokemons</h3>
-          <form action="/users_pokemons" method="POST">
-            <input type="hidden" name="user_id" defaultValue={this.props.userId} />
-            <select name="pokemon_id" id="pokemon_id">
-              {pokemonOptions}
-            </select>
-            <input type="submit" value="Add" />
-          </form>
+          {deleteUser}
           <ul>
-            {this.props.capturedPokemons.map(pokemon => (
-              <li key={pokemon.id}>
-                {pokemon.name}
-              </li>
-            ))}
+            {pokemonList}
           </ul>
         </body>
       </html>

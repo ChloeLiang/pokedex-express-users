@@ -189,6 +189,20 @@ const usersPokemonsCreate = (request, response) => {
   });
 };
 
+const usersPokemonsDelete = (request, response) => {
+  const pokemonId = request.params.pokemonId;
+  const userId = request.cookies.userId;
+  const queryString = `DELETE from users_pokemons WHERE user_id = ${userId} AND pokemon_id = ${pokemonId}`;
+  pool.query(queryString, (err, result) => {
+    if (err) {
+      console.error('Query error:', err.stack);
+      response.send('Query Error');
+    } else {
+      response.redirect('back');
+    }
+  });
+};
+
 /**
  * ===================================
  * User
@@ -237,9 +251,10 @@ const usersShow = (request, response) => {
           response.send('Query Error');
         } else {
           const userId = request.params.id;
-          const allPokemons = allResult.rows;
           const capturedPokemons = capturedResult.rows;
-          response.render('users/user', { userId, allPokemons, capturedPokemons });
+          const userLoggedIn = request.cookies.userId;
+          let isAuth = userId === userLoggedIn;
+          response.render('users/user', { userId, capturedPokemons, isAuth });
         }
       });
     }
@@ -351,6 +366,7 @@ app.delete('/pokemon/:id', deletePokemon);
 
 app.get('/users_pokemons/new', usersPokemonsNew);
 app.post('/users_pokemons', usersPokemonsCreate);
+app.delete('/users_pokemons/:pokemonId', usersPokemonsDelete);
 
 app.get('/users/:id/edit', usersEdit);
 app.get('/users/new', usersNew);
