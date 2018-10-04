@@ -76,8 +76,8 @@ const getPokemon = (request, response) => {
             } else {
               const pokemon = result.rows[0];
               const users = usersResult.rows;
-              const allUsers = allUsersResult.rows;
-              response.render('pokemon/pokemon', { pokemon, users, allUsers });
+              const user = request.cookies.userId;
+              response.render('pokemon/pokemon', { pokemon, users, user });
             }
           });
         }
@@ -255,8 +255,9 @@ const usersCreate = (request, response) => {
       console.error('Query error:', err.stack);
       response.send('dang it.');
     } else {
-      response.cookie('userId', result.rows[0].id);
-      response.redirect('/users');
+      const userId = result.rows[0].id;
+      response.cookie('userId', userId);
+      response.redirect(`/users/${userId}`);
     }
   });
 };
